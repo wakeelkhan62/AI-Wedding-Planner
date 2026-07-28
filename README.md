@@ -1,10 +1,10 @@
-# 💍 AI Wedding Planner (Multi-Agent AI System)
+# AI Wedding Planner (Multi-Agent AI System)
 
 An intelligent **AI Wedding Planner** built using **LangChain**, **LangGraph**, **Azure OpenAI**, and **Streamlit**. The system follows a **Multi-Agent Architecture**, where each AI agent is responsible for a specific wedding planning task while a Coordinator Agent manages the overall workflow.
 
 ---
 
-# 📌 Project Overview
+# Project Overview
 
 Planning a wedding involves multiple decisions such as venue selection, budget allocation, catering, decoration, and event scheduling.
 
@@ -16,7 +16,7 @@ The project also supports **conversation memory**, allowing users to modify indi
 
 ---
 
-# 🎯 Objectives
+# Objectives
 
 - Demonstrate Multi-Agent AI Architecture
 - Showcase LangChain Agent orchestration
@@ -26,7 +26,7 @@ The project also supports **conversation memory**, allowing users to modify indi
 
 ---
 
-# 🏗️ System Architecture
+# System Architecture
 
 ```
                      User
@@ -44,7 +44,7 @@ The Coordinator Agent decides which specialist agents are required based on the 
 
 ---
 
-# 🤖 AI Agents
+# AI Agents
 
 ## 1. Coordinator Agent
 
@@ -128,7 +128,7 @@ Responsibilities:
 
 ---
 
-# 🧠 Memory
+# Memory
 
 The project uses **LangGraph Checkpointer Memory**.
 
@@ -153,7 +153,7 @@ Only the **Venue Agent** is executed.
 
 ---
 
-# ✨ Features
+# Features
 
 - Multi-Agent Architecture
 - Coordinator-based Routing
@@ -167,7 +167,7 @@ Only the **Venue Agent** is executed.
 
 ---
 
-# 🛠️ Technologies Used
+# Technologies Used
 
 - Python
 - LangChain
@@ -179,7 +179,7 @@ Only the **Venue Agent** is executed.
 
 ---
 
-# 📁 Project Structure
+# Project Structure
 
 ```
 Wedding-Planner-AI/
@@ -211,7 +211,7 @@ Wedding-Planner-AI/
 
 ---
 
-# 🚀 Installation
+# Installation
 
 Clone the repository:
 
@@ -253,7 +253,7 @@ streamlit run app.py
 
 ---
 
-# 📸 Screenshots
+# Screenshots
 
 Add screenshots inside the `assets/` folder.
 
@@ -269,7 +269,7 @@ assets/
 
 ---
 
-# 🔮 Future Improvements
+# Future Improvements
 
 - Photography Agent
 - Invitation Card Agent
@@ -283,15 +283,14 @@ assets/
 
 ---
 
-# 👨‍💻 Developer
+# Developer
 
 **Wakeel Ahmad**
 
 BS Computer Science
 
-
 ---
 
-# ⭐ If you like this project
+# If you like this project
 
-Please consider giving it a ⭐ on GitHub.
+Please consider giving it a star on GitHub.
