@@ -1,6 +1,7 @@
 import streamlit as st
 import asyncio
 import uuid
+import time
 
 from agents.coordinator import coordinator
 from utils.response_normalizer import normalize_response
@@ -11,7 +12,7 @@ from utils.response_normalizer import normalize_response
 
 st.set_page_config(
     page_title="AI Wedding Planner",
-    page_icon="💍",
+    page_icon="W",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -31,15 +32,15 @@ HERO_IMAGE_URL = "https://images.unsplash.com/photo-1519225421980-715cb0215aed?q
 _CSS = """
 <style>
 
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
 
 html, body, [class*="css"] {
-    font-family: 'Poppins', 'Inter', sans-serif;
+    font-family: 'Inter', sans-serif;
 }
 
-/* Main app background - warm cream, luxury feel */
+/* Main app background - warm ivory, premium feel */
 [data-testid="stAppViewContainer"] {
-    background: linear-gradient(180deg, #FCFBF8 0%, #F9F7F4 100%);
+    background: linear-gradient(180deg, #FBFAF7 0%, #F6F4EE 100%);
 }
 
 [data-testid="stHeader"] {
@@ -54,31 +55,32 @@ footer {visibility: hidden;}
    Sidebar
 -------------------------------------------------- */
 [data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #2B1B2F 0%, #1F1425 100%);
-    color: #F5EDE6;
+    background: linear-gradient(180deg, #0F2043 0%, #0A1630 100%);
+    color: #E9E4D8;
 }
 
 [data-testid="stSidebar"] * {
-    color: #F5EDE6 !important;
+    color: #E9E4D8 !important;
 }
 
 [data-testid="stSidebar"] h1 {
+    font-family: 'Playfair Display', serif;
     font-weight: 700;
-    font-size: 1.6rem;
+    font-size: 1.55rem;
     padding-bottom: 0.2rem;
 }
 
 .sidebar-divider {
     border: none;
-    border-top: 1px solid rgba(245, 237, 230, 0.15);
+    border-top: 1px solid rgba(201, 162, 76, 0.2);
     margin: 1rem 0;
 }
 
 .sidebar-section-title {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     letter-spacing: 1.5px;
     text-transform: uppercase;
-    color: #D8A7C4 !important;
+    color: #C9A24C !important;
     margin-bottom: 0.4rem;
     font-weight: 600;
 }
@@ -91,28 +93,58 @@ footer {visibility: hidden;}
 
 .sidebar-badge {
     display: inline-block;
-    background: rgba(216, 167, 196, 0.15);
-    border: 1px solid rgba(216, 167, 196, 0.35);
-    color: #D8A7C4 !important;
+    background: rgba(201, 162, 76, 0.1);
+    border: 1px solid rgba(201, 162, 76, 0.35);
+    color: #C9A24C !important;
     padding: 3px 10px;
     border-radius: 20px;
     font-size: 0.72rem;
     margin: 3px 4px 3px 0;
 }
 
-/* Sidebar buttons */
+/* Sidebar buttons (New Chat) */
 [data-testid="stSidebar"] button {
-    background: linear-gradient(90deg, #E786A0, #9B5DE5) !important;
-    color: white !important;
+    background: linear-gradient(135deg, #D9B25F, #B8892E) !important;
+    color: #14213D !important;
     border: none !important;
     border-radius: 10px !important;
-    font-weight: 600 !important;
+    font-weight: 700 !important;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 [data-testid="stSidebar"] button:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(155, 93, 229, 0.4);
+    box-shadow: 0 6px 16px rgba(201, 162, 76, 0.35);
+}
+
+/* History list buttons: quieter style than the New Chat button,
+   left-aligned with truncated text, highlighted when active */
+[data-testid="stSidebar"] button[kind="secondary"] {
+    background: rgba(233, 228, 216, 0.05) !important;
+    border: 1px solid rgba(233, 228, 216, 0.12) !important;
+    color: #C7CADA !important;
+    font-weight: 400 !important;
+    text-align: left !important;
+    justify-content: flex-start !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block !important;
+}
+
+[data-testid="stSidebar"] button[kind="secondary"]:hover {
+    background: rgba(233, 228, 216, 0.1) !important;
+    box-shadow: none;
+    transform: none;
+}
+
+[data-testid="stSidebar"] button[kind="primary"] {
+    text-align: left !important;
+    justify-content: flex-start !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block !important;
 }
 
 /* --------------------------------------------------
@@ -125,9 +157,9 @@ footer {visibility: hidden;}
     border-radius: 20px;
     overflow: hidden;
     margin-bottom: 1.8rem;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.14);
+    box-shadow: 0 10px 30px rgba(15, 32, 67, 0.18);
     background-image:
-        linear-gradient(180deg, rgba(30,15,35,0.55) 0%, rgba(30,15,35,0.72) 100%),
+        linear-gradient(180deg, rgba(10,22,48,0.6) 0%, rgba(10,22,48,0.8) 100%),
         url('__HERO_IMAGE_URL__');
     background-size: cover;
     background-position: center 35%;
@@ -146,58 +178,52 @@ footer {visibility: hidden;}
 }
 
 .hero-title {
+    font-family: 'Playfair Display', serif;
     color: #FFFFFF;
-    font-size: 2.4rem;
+    font-size: 2.5rem;
     font-weight: 700;
     margin: 0;
     text-shadow: 0 2px 12px rgba(0,0,0,0.35);
 }
 
+.hero-divider {
+    width: 60px;
+    height: 2px;
+    background: #C9A24C;
+    margin: 0.8rem auto;
+}
+
 .hero-subtitle {
-    color: #F3D9E6;
-    font-size: 1.05rem;
+    color: #E9D9AE;
+    font-size: 1.02rem;
     font-weight: 400;
-    margin-top: 0.5rem;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.4px;
     text-shadow: 0 2px 8px rgba(0,0,0,0.35);
 }
 
 /* --------------------------------------------------
-   Feature / Icon Cards
+   Feature / Quick-Prompt Buttons
 -------------------------------------------------- */
-.feature-row {
-    display: flex;
-    gap: 14px;
-    margin-bottom: 1.8rem;
-    flex-wrap: wrap;
+.st-key-feature_buttons {
+    margin-bottom: 1.6rem;
 }
 
-.feature-card {
-    flex: 1;
-    min-width: 140px;
-    background: #FFFFFF;
-    border-radius: 16px;
-    padding: 1rem 0.8rem;
-    text-align: center;
-    box-shadow: 0 4px 14px rgba(155, 93, 229, 0.08);
-    border: 1px solid #F0E6EC;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+.st-key-feature_buttons button {
+    background: #FFFFFF !important;
+    color: #14213D !important;
+    border: 1px solid #E9E4D8 !important;
+    border-radius: 14px !important;
+    padding: 1rem 0.5rem !important;
+    font-weight: 600 !important;
+    font-size: 0.9rem !important;
+    box-shadow: 0 4px 14px rgba(15, 32, 67, 0.06) !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
-.feature-card:hover {
+.st-key-feature_buttons button:hover {
     transform: translateY(-4px);
-    box-shadow: 0 10px 24px rgba(155, 93, 229, 0.18);
-}
-
-.feature-icon {
-    font-size: 1.8rem;
-    margin-bottom: 0.3rem;
-}
-
-.feature-label {
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: #3A2A3D;
+    box-shadow: 0 10px 24px rgba(201, 162, 76, 0.22) !important;
+    border-color: #C9A24C !important;
 }
 
 /* --------------------------------------------------
@@ -223,15 +249,18 @@ footer {visibility: hidden;}
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.1rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #FFFFFF;
 }
 
 .chat-avatar.user {
-    background: linear-gradient(135deg, #6C63FF, #9B5DE5);
+    background: linear-gradient(135deg, #1B3A6B, #0F2043);
 }
 
 .chat-avatar.assistant {
-    background: #FDE9F0;
+    background: linear-gradient(135deg, #D9B25F, #B8892E);
+    color: #14213D;
 }
 
 .chat-bubble {
@@ -242,10 +271,10 @@ footer {visibility: hidden;}
 }
 
 .chat-bubble.user {
-    background: linear-gradient(135deg, #6C63FF, #9B5DE5);
+    background: linear-gradient(135deg, #1B3A6B, #0F2043);
     color: #FFFFFF;
     border-radius: 18px 18px 4px 18px;
-    box-shadow: 0 4px 14px rgba(108, 99, 255, 0.25);
+    box-shadow: 0 4px 14px rgba(15, 32, 67, 0.25);
 }
 
 .chat-bubble.user p, .chat-bubble.user * {
@@ -254,10 +283,10 @@ footer {visibility: hidden;}
 
 .chat-bubble.assistant {
     background: #FFFFFF;
-    color: #3A2A3D;
+    color: #1C2B45;
     border-radius: 18px 18px 18px 4px;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.06);
-    border: 1px solid #F0E6EC;
+    box-shadow: 0 4px 14px rgba(15, 32, 67, 0.07);
+    border: 1px solid #ECE7DA;
 }
 
 .chat-bubble p {
@@ -269,15 +298,16 @@ footer {visibility: hidden;}
 }
 
 .chat-bubble h1, .chat-bubble h2, .chat-bubble h3, .chat-bubble h4 {
+    font-family: 'Playfair Display', serif;
     margin: 0.6rem 0 0.4rem 0;
-    font-weight: 600;
+    font-weight: 700;
     line-height: 1.3;
 }
 
 .chat-bubble h1 { font-size: 1.25rem; }
 .chat-bubble h2 { font-size: 1.15rem; }
-.chat-bubble h3 { font-size: 1.05rem; color: #9B5DE5; }
-.chat-bubble h4 { font-size: 0.98rem; color: #9B5DE5; }
+.chat-bubble h3 { font-size: 1.05rem; color: #B8892E; }
+.chat-bubble h4 { font-size: 0.98rem; color: #B8892E; }
 
 .chat-bubble.user h1, .chat-bubble.user h2,
 .chat-bubble.user h3, .chat-bubble.user h4 {
@@ -295,7 +325,7 @@ footer {visibility: hidden;}
 
 .chat-bubble strong {
     font-weight: 700;
-    color: #6C3D82;
+    color: #0F2043;
 }
 
 .chat-bubble.user strong {
@@ -307,7 +337,7 @@ footer {visibility: hidden;}
 }
 
 .chat-bubble code {
-    background: rgba(155, 93, 229, 0.1);
+    background: rgba(201, 162, 76, 0.12);
     padding: 1px 6px;
     border-radius: 5px;
     font-size: 0.85em;
@@ -321,18 +351,18 @@ footer {visibility: hidden;}
 }
 
 .chat-bubble th, .chat-bubble td {
-    border: 1px solid #EADDE6;
+    border: 1px solid #ECE7DA;
     padding: 6px 10px;
     text-align: left;
 }
 
 .chat-bubble th {
-    background: #FBF3F8;
+    background: #FAF6EC;
 }
 
 .chat-bubble hr {
     border: none;
-    border-top: 1px solid #EADDE6;
+    border-top: 1px solid #ECE7DA;
     margin: 0.6rem 0;
 }
 
@@ -341,7 +371,7 @@ footer {visibility: hidden;}
 -------------------------------------------------- */
 [data-testid="stBottomBlockContainer"],
 [data-testid="stBottom"] > div {
-    background: linear-gradient(180deg, rgba(249,247,244,0) 0%, #F9F7F4 40%) !important;
+    background: linear-gradient(180deg, rgba(246,244,238,0) 0%, #F6F4EE 40%) !important;
 }
 
 [data-testid="stChatInput"] {
@@ -350,54 +380,37 @@ footer {visibility: hidden;}
 
 [data-testid="stChatInput"] > div {
     background: #FFFFFF !important;
-    border: 1px solid #E8D5DE !important;
+    border: 1px solid #E9E4D8 !important;
     border-radius: 26px !important;
-    box-shadow: 0 6px 20px rgba(155, 93, 229, 0.12) !important;
+    box-shadow: 0 6px 20px rgba(15, 32, 67, 0.08) !important;
     padding: 2px 6px !important;
 }
 
 [data-testid="stChatInput"] > div:focus-within {
-    border: 1px solid #9B5DE5 !important;
-    box-shadow: 0 6px 20px rgba(155, 93, 229, 0.22) !important;
+    border: 1px solid #C9A24C !important;
+    box-shadow: 0 6px 20px rgba(201, 162, 76, 0.22) !important;
 }
 
 [data-testid="stChatInput"] textarea {
     border: none !important;
     box-shadow: none !important;
-    font-family: 'Poppins', 'Inter', sans-serif !important;
-    color: #3A2A3D !important;
+    font-family: 'Inter', sans-serif !important;
+    color: #1C2B45 !important;
 }
 
 [data-testid="stChatInput"] textarea::placeholder {
-    color: #B8A6B5 !important;
+    color: #A9A69A !important;
 }
 
 /* Send button */
 [data-testid="stChatInput"] button {
-    background: linear-gradient(135deg, #6C63FF, #9B5DE5) !important;
+    background: linear-gradient(135deg, #D9B25F, #B8892E) !important;
     border-radius: 50% !important;
     border: none !important;
 }
 
 [data-testid="stChatInput"] button svg {
-    fill: #FFFFFF !important;
-}
-
-/* --------------------------------------------------
-   Footer
--------------------------------------------------- */
-.app-footer {
-    text-align: center;
-    margin-top: 2.5rem;
-    padding-top: 1.2rem;
-    border-top: 1px solid #EDE2E8;
-    color: #8A7A8C;
-    font-size: 0.85rem;
-    line-height: 1.7;
-}
-
-.app-footer b {
-    color: #6C5B6E;
+    fill: #14213D !important;
 }
 
 </style>
@@ -408,12 +421,24 @@ st.markdown(_CSS.replace("__HERO_IMAGE_URL__", HERO_IMAGE_URL), unsafe_allow_htm
 # --------------------------------------------------
 # Session State
 # --------------------------------------------------
+# We keep a dictionary of chat sessions so the sidebar can show
+# previous conversations, not just the current one.
+#
+# st.session_state.sessions = {
+#     thread_id: {"title": "First user message...", "messages": [...]},
+#     ...
+# }
 
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+if "sessions" not in st.session_state:
+    st.session_state.sessions = {}
 
-if "thread_id" not in st.session_state:
-    st.session_state.thread_id = str(uuid.uuid4())
+if "active_thread_id" not in st.session_state:
+    new_id = str(uuid.uuid4())
+    st.session_state.sessions[new_id] = {"title": "New Chat", "messages": []}
+    st.session_state.active_thread_id = new_id
+
+active_id = st.session_state.active_thread_id
+active_session = st.session_state.sessions[active_id]
 
 # --------------------------------------------------
 # Sidebar
@@ -421,17 +446,31 @@ if "thread_id" not in st.session_state:
 
 with st.sidebar:
 
-    st.title("💍 AI Wedding Planner")
+    st.title("AI Wedding Planner")
 
     st.markdown('<hr class="sidebar-divider">', unsafe_allow_html=True)
 
-    st.markdown('<div class="sidebar-section-title">Session</div>', unsafe_allow_html=True)
-    st.code(st.session_state.thread_id[:8])
-
-    if st.button("🆕 New Chat", use_container_width=True):
-        st.session_state.messages = []
-        st.session_state.thread_id = str(uuid.uuid4())
+    if st.button("New Chat", use_container_width=True, type="primary"):
+        new_id = str(uuid.uuid4())
+        st.session_state.sessions[new_id] = {"title": "New Chat", "messages": []}
+        st.session_state.active_thread_id = new_id
         st.rerun()
+
+    st.markdown('<hr class="sidebar-divider">', unsafe_allow_html=True)
+
+    st.markdown('<div class="sidebar-section-title">History</div>', unsafe_allow_html=True)
+
+    # Most recent sessions first
+    for tid in reversed(list(st.session_state.sessions.keys())):
+        session = st.session_state.sessions[tid]
+        label = session["title"]
+        is_active = (tid == active_id)
+
+        button_type = "primary" if is_active else "secondary"
+
+        if st.button(label, key=f"history_{tid}", use_container_width=True, type=button_type):
+            st.session_state.active_thread_id = tid
+            st.rerun()
 
     st.markdown('<hr class="sidebar-divider">', unsafe_allow_html=True)
 
@@ -440,17 +479,12 @@ with st.sidebar:
         """
         <div class="sidebar-credit">
         An AI-powered wedding planning assistant that helps you plan venue,
-        budget, catering, decoration and timeline — all through a
+        budget, catering, decoration and timeline, all through a
         conversational multi-agent system.
         </div>
         """,
         unsafe_allow_html=True
     )
-
-    st.markdown('<hr class="sidebar-divider">', unsafe_allow_html=True)
-
-    st.markdown('<div class="sidebar-section-title">Developed By</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sidebar-credit">👨‍💻 <b>Wakeel Ahmad</b></div>', unsafe_allow_html=True)
 
     st.markdown('<hr class="sidebar-divider">', unsafe_allow_html=True)
 
@@ -472,7 +506,8 @@ st.markdown(
     """
     <div class="hero-wrap">
         <div class="hero-overlay">
-            <div class="hero-title">💍 AI Wedding Planner</div>
+            <div class="hero-title">AI Wedding Planner</div>
+            <div class="hero-divider"></div>
             <div class="hero-subtitle">Plan Your Dream Wedding — Powered by LangChain AI Agents</div>
         </div>
     </div>
@@ -481,36 +516,27 @@ st.markdown(
 )
 
 # --------------------------------------------------
-# Feature Cards
+# Feature / Quick-Prompt Buttons
 # --------------------------------------------------
+# Clicking one of these sends a ready-made question to the AI,
+# instead of the user having to type it out.
 
-st.markdown(
-    """
-    <div class="feature-row">
-        <div class="feature-card">
-            <div class="feature-icon">🏛</div>
-            <div class="feature-label">Venue</div>
-        </div>
-        <div class="feature-card">
-            <div class="feature-icon">💰</div>
-            <div class="feature-label">Budget</div>
-        </div>
-        <div class="feature-card">
-            <div class="feature-icon">🍽</div>
-            <div class="feature-label">Catering</div>
-        </div>
-        <div class="feature-card">
-            <div class="feature-icon">🌸</div>
-            <div class="feature-label">Decoration</div>
-        </div>
-        <div class="feature-card">
-            <div class="feature-icon">🕒</div>
-            <div class="feature-label">Timeline</div>
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+FEATURE_PROMPTS = {
+    "Venue": "Suggest some venue options for my wedding, with pricing and capacity.",
+    "Budget": "Help me plan and allocate my wedding budget.",
+    "Catering": "Suggest catering options and menu ideas for my wedding.",
+    "Decoration": "Suggest wedding decoration themes and ideas.",
+    "Timeline": "Create a wedding day schedule and timeline.",
+}
+
+card_prompt = None
+
+with st.container(key="feature_buttons"):
+    cols = st.columns(len(FEATURE_PROMPTS))
+    for col, (label, canned_prompt) in zip(cols, FEATURE_PROMPTS.items()):
+        with col:
+            if st.button(label, key=f"card_{label}", use_container_width=True):
+                card_prompt = canned_prompt
 
 # --------------------------------------------------
 # LangGraph Config
@@ -518,7 +544,7 @@ st.markdown(
 
 config = {
     "configurable": {
-        "thread_id": st.session_state.thread_id
+        "thread_id": active_id
     }
 }
 
@@ -557,7 +583,7 @@ def render_bubble(role: str, content: str):
     lists) — we convert that markdown to HTML so it renders with
     proper structure instead of appearing as one flat block of text.
     """
-    avatar = "🧑" if role == "user" else "💍"
+    avatar = "U" if role == "user" else "W"
     content_html = _md_lib.markdown(content, extensions=_MD_EXTENSIONS)
 
     st.markdown(
@@ -570,31 +596,63 @@ def render_bubble(role: str, content: str):
         unsafe_allow_html=True
     )
 
+
+def render_bubble_streaming(content: str, delay: float = 0.02):
+    """Render the assistant's answer word-by-word, like ChatGPT typing.
+
+    Uses a single placeholder that gets re-rendered with progressively
+    more of the text on each step, instead of dumping the full answer
+    at once.
+    """
+    placeholder = st.empty()
+    words = content.split(" ")
+    shown = ""
+
+    for word in words:
+        shown += word + " "
+        content_html = _md_lib.markdown(shown, extensions=_MD_EXTENSIONS)
+
+        placeholder.markdown(
+            f"""
+            <div class="chat-row assistant">
+                <div class="chat-avatar assistant">W</div>
+                <div class="chat-bubble assistant">{content_html}</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        time.sleep(delay)
+
 # --------------------------------------------------
 # Display Chat History
 # --------------------------------------------------
 
-for message in st.session_state.messages:
+for message in active_session["messages"]:
     render_bubble(message["role"], message["content"])
 
 # --------------------------------------------------
 # Chat Input
 # --------------------------------------------------
 
-prompt = st.chat_input("Ask me anything about your wedding...")
+typed_prompt = st.chat_input("Ask me anything about your wedding...")
+prompt = card_prompt or typed_prompt
 
 if prompt:
 
-    st.session_state.messages.append(
+    active_session["messages"].append(
         {
             "role": "user",
             "content": prompt
         }
     )
 
+    # Title the session after the first message, like ChatGPT does
+    if active_session["title"] == "New Chat":
+        active_session["title"] = (prompt[:30] + "...") if len(prompt) > 30 else prompt
+
     render_bubble("user", prompt)
 
-    with st.spinner("✨ AI Agents are planning your wedding..."):
+    with st.spinner("AI agents are planning your wedding..."):
 
         answer = asyncio.run(
             ask_ai(prompt)
@@ -603,25 +661,13 @@ if prompt:
         # Normalize Response
         answer = normalize_response(answer)
 
-    render_bubble("assistant", answer)
+    render_bubble_streaming(answer)
 
-    st.session_state.messages.append(
+    active_session["messages"].append(
         {
             "role": "assistant",
             "content": answer
         }
     )
 
-# --------------------------------------------------
-# Footer
-# --------------------------------------------------
-
-st.markdown(
-    """
-    <div class="app-footer">
-        Powered by <b>LangChain Multi-Agent Architecture</b><br>
-        Built with ❤️ by <b>Wakeel Ahmad</b>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+    st.rerun()
